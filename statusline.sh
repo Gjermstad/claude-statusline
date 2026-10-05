@@ -16,8 +16,24 @@ eval "$(printf '%s' "$input" | jq -r '
        CACHE_WARM=\(.prompt_cache.warm // false | tostring)
        CACHE_EXP=\(.prompt_cache.expires_at // "")
        CACHE_COLD_TOK=\(.prompt_cache.recache_tokens_if_cold // 0 | floor)
-       CACHE_TTL=\(.prompt_cache.ttl // "")"
+       CACHE_TTL=\(.prompt_cache.ttl // "")
+       SESSION=\(.session_id // "")"
 ')"
+
+# Optional quota log. Set CLAUDE_STATUSLINE_QUOTA_LOG to a file path and one
+# tab-separated line (epoch, 5h %, 7d %, session id, dir, 7d reset epoch) is
+# appended each time either percentage moves. Sessions refresh independently,
+# so readings from two sessions can interleave a point apart; a reader should
+# take the highest value per reset window, not the difference between lines. On a subscription the quota is the real cost, so
+# this is what to measure a feature's price in. Several sessions can share the
+# file; comparing against the last line keeps unchanged readings out.
+if [ -n "$CLAUDE_STATUSLINE_QUOTA_LOG" ] && [ -n "$SEVEN_D" ]; then
+  last=$(tail -n 1 "$CLAUDE_STATUSLINE_QUOTA_LOG" 2>/dev/null | cut -f2,3)
+  if [ "$last" != "${FIVE_H}	${SEVEN_D}" ]; then
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$FIVE_H" "$SEVEN_D" "$SESSION" "$DIR" "$SEVEN_RESET" \
+      >> "$CLAUDE_STATUSLINE_QUOTA_LOG" 2>/dev/null
+  fi
+fi
 
 RESET='\033[0m'; BOLD='\033[1m'
 CYAN='\033[36m'; BLUE='\033[94m'; MAGENTA='\033[95m'
