@@ -153,8 +153,15 @@ if [ -n "$CACHE_EXP" ]; then
       5m|5M|300|300s) CACHE_MULT=125 ;;   # 5-minute TTL: write costs 1.25x
       *)              CACHE_MULT=200 ;;   # 1-hour TTL (Claude Code default): 2x
     esac
-    CACHE_BILL=$(( CACHE_COLD_TOK * CACHE_MULT / 100 ))
-    CACHE_SEG=$(printf " | %b❄️ %dk%b" "$RED" $(( (CACHE_BILL + 500) / 1000 )) "$RESET")
+    # 0 is "not measured", not "free": right after a compaction (or /clear)
+    # the new prefix has never been sent, so the field reads 0 although the
+    # next message still writes system prompt, tools and summary to cache.
+    if [ "$CACHE_COLD_TOK" -gt 0 ]; then
+      CACHE_BILL=$(( CACHE_COLD_TOK * CACHE_MULT / 100 ))
+      CACHE_SEG=$(printf " | %b❄️ %dk%b" "$RED" $(( (CACHE_BILL + 500) / 1000 )) "$RESET")
+    else
+      CACHE_SEG=$(printf " | %b❄️ ?%b" "$RED" "$RESET")
+    fi
   fi
 fi
 
