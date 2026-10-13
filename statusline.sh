@@ -127,7 +127,8 @@ fi
 # (measured on v2.1.276): .warm, .ttl, .expires_at as an epoch, and
 # .recache_tokens_if_cold -- what a cold start would have to re-send.
 #
-# Warm: how long the cache still lives, green above 15 minutes, yellow below.
+# Warm: how long the cache still lives out of its TTL ("4/5m"), green while
+# at least a quarter of the TTL is left (15 minutes on 1h), yellow below.
 # Cold (expired, or never written): red, with the token bill for the next
 # message. Missing block = no API response yet, so the segment drops out.
 #
@@ -146,7 +147,23 @@ if [ -n "$CACHE_EXP" ]; then
     else
       CACHE_TXT=$(printf "%dm" $(( CACHE_LEFT / 60 )))
     fi
-    [ "$CACHE_LEFT" -ge 900 ] && CACHE_COLOR="$GREEN" || CACHE_COLOR="$YELLOW"
+    # Shown as left/TTL, coloured by the share of the TTL that is left. On a
+    # 5m TTL every request pushes expiry back to ~5m, so a bare "4m" looked
+    # frozen; and a fixed 15-minute threshold kept it yellow for good.
+    case "$CACHE_TTL" in
+      *h) TTL_SECS=$(( ${CACHE_TTL%h} * 3600 )) ;;
+      *m) TTL_SECS=$(( ${CACHE_TTL%m} * 60 )) ;;
+      *s) TTL_SECS=${CACHE_TTL%s} ;;
+      ''|*[!0-9]*) TTL_SECS=0 ;;
+      *)  TTL_SECS=$CACHE_TTL ;;
+    esac
+    if [ "$TTL_SECS" -gt 0 ]; then
+      # Both sides in minutes ("4/5m", "30/60m"): "30m/1h" mixed units.
+      CACHE_TXT=$(printf "%d/%dm" $(( CACHE_LEFT / 60 )) $(( TTL_SECS / 60 )))
+      [ $(( CACHE_LEFT * 4 )) -ge "$TTL_SECS" ] && CACHE_COLOR="$GREEN" || CACHE_COLOR="$YELLOW"
+    else
+      [ "$CACHE_LEFT" -ge 900 ] && CACHE_COLOR="$GREEN" || CACHE_COLOR="$YELLOW"
+    fi
     CACHE_SEG=$(printf " | %b🔥 %s%b" "$CACHE_COLOR" "$CACHE_TXT" "$RESET")
   else
     case "$CACHE_TTL" in

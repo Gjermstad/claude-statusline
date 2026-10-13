@@ -37,6 +37,14 @@ If you shrink the window with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` or the `autoComp
 
 ❄️ shows `recache_tokens_if_cold` × the cache-write multiplier: 2× on the 1-hour TTL (Claude Code's default) and 1.25× on the 5-minute one (which applies in usage overage). It is the price of the next message in plain-input-token equivalents, not the size of the context. The multiplier follows `.ttl` instead of being hardcoded.
 
+`recache_tokens_if_cold` reads 0 right after a compaction or `/clear`, because the new prefix has never been sent. That is "not measured", not "free", so it shows as `❄️ ?` instead of `❄️ 0k`.
+
+## The warm-cache timer
+
+🔥 shows minutes left out of the TTL, both in minutes: `4/5m`, `45/60m`. A bare `4m` looked frozen on the 5-minute TTL, because every request pushes `expires_at` back to about five minutes out, and mixed units (`45m/1h`) read badly. The colour turns yellow when less than a quarter of the TTL is left, which is 15 minutes on the 1-hour TTL. If the JSON has no `.ttl`, the segment falls back to a bare `45m` and the fixed 15-minute threshold.
+
+Which TTL a session gets is Claude Code's choice: the main conversation gets 1 hour on a subscription within plan usage and 5 minutes otherwise, and the `promptCacheTtl` setting overrides it ([Anthropic's docs](https://code.claude.com/docs/en/prompt-caching#which-ttl-each-request-gets)).
+
 ## Settings you can change
 
 All at the top of the script:
@@ -49,7 +57,7 @@ All at the top of the script:
 | `CTX_MARGIN_PCT` | 15 | …capped at this share of small windows |
 | `CTX_FALLBACK_PCT` | 85 | Used only when there's no window size |
 
-Thresholds: bars are green below 50 %, yellow 50–75 %, and red above 75 %. The cache turns yellow under 15 minutes. The 7d reset time appears under 48 hours left or at 50 % used, and becomes a countdown under 12 hours.
+Thresholds: bars are green below 50 %, yellow 50–75 %, and red above 75 %. The cache turns yellow when less than a quarter of its TTL is left. The 7d reset time appears under 48 hours left or at 50 % used, and becomes a countdown under 12 hours.
 
 ## Portability
 

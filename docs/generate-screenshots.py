@@ -31,7 +31,7 @@ FG = {"31": "#f85149", "32": "#3fb950", "33": "#db9e18",
 
 def session(ctx_tokens=300_000, window=1_000_000, effort="high",
             five=62, five_left=5000, seven=55, seven_left=200_000,
-            cache_warm=True, cache_left=2400, cold_tokens=120_000,
+            cache_warm=True, cache_left=2400, cold_tokens=120_000, ttl="1h",
             model="Opus 5.5", cwd=None):
     now = int(time.time())
     return {
@@ -45,7 +45,7 @@ def session(ctx_tokens=300_000, window=1_000_000, effort="high",
             "seven_day": {"used_percentage": seven, "resets_at": now + seven_left},
         },
         "prompt_cache": {"warm": cache_warm, "expires_at": now + cache_left,
-                         "ttl": "1h", "recache_tokens_if_cold": cold_tokens},
+                         "ttl": ttl, "recache_tokens_if_cold": cold_tokens},
     }
 
 
@@ -205,7 +205,7 @@ def main():
     shoot("overview", [
         (None, l1, ["Model and effort", "Folder", "Git branch (* = unsaved changes)"]),
         (None, l2, ["Room left in the conversation", "5-hour limit, resets in 1h 23m",
-                    "Weekly limit, resets Friday", "Memory kept warm for 40 more min"]),
+                    "Weekly limit and when it resets", "Memory kept warm for 40 of 60 min"]),
     ])
 
     shoot("calm", [(None, line, None) for line in
@@ -218,6 +218,7 @@ def main():
     shoot("cache", [
         ("Warm, plenty of time", s(cache_left=2700)[1], None),
         ("Warm, running out: send something within 8 minutes to keep it", s(cache_left=500)[1], None),
+        ("Warm on the 5-minute timer: every message starts it over", s(cache_left=270, ttl="5m")[1], None),
         ("Cold: the next message costs about 240k tokens", s(cache_warm=False, cache_left=-60)[1], None),
     ])
 

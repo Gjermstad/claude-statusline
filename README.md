@@ -40,12 +40,16 @@ The 5h and 7d bars only appear on a Claude subscription (Pro or Max), and only a
 
 #### 🔥 and ❄️: Claude's short-term memory
 
-After each message, Claude keeps your conversation ready in memory for a while (usually an hour). That's the **cache**. While it's warm, continuing the conversation is cheap. Every message you send restarts the timer.
+After each message, Claude keeps your conversation ready in memory for a while. That's the **cache**. While it's warm, continuing the conversation is cheap. Every message you send restarts the timer.
 
-- **🔥 45m** means the cache is warm and will stay that way for 45 more minutes. It turns yellow when there's less than a quarter of an hour left.
-- **❄️ 240k** means it has gone cold. Your next message has to send the whole conversation again, which uses a lot more of your limits. The number is roughly how much, measured in tokens (pieces of text).
+How long "a while" is depends on your account: an hour on a Claude subscription within its limits, five minutes otherwise. So the timer shows both numbers.
 
-![The cache in its three states: warm, running out, and cold](docs/img/cache.png)
+- **🔥 45/60m** means the cache is warm and will stay that way for 45 more minutes out of the hour. **🔥 4/5m** is the same on the five-minute timer: while you're working it hovers between 4 and 5, because every message starts it over. It turns yellow when less than a quarter of the time is left.
+- **❄️ 240k** means it has gone cold. Your next message has to send the whole conversation again, which uses a lot more of your limits. The number is roughly how much, measured in tokens (pieces of text). **❄️ ?** means Claude Code hasn't measured it yet, which happens right after `/clear` or a compaction.
+
+**If you expected an hour and see /5m**, your session got the short timer. You can ask for the hour yourself with `"promptCacheTtl": "1h"` in `~/.claude/settings.json` (Claude Code v2.1.242 or later). See [Anthropic's page on cache lifetime](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) for when each one applies.
+
+![The cache: warm, running out, warm on the five-minute timer, and cold](docs/img/cache.png)
 
 **What to do with this:** if you see ❄️ with a big number, you're coming back to a long conversation after a break. If you don't need everything in it, start fresh with `/clear` instead. It costs almost nothing.
 
