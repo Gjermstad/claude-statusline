@@ -21,7 +21,8 @@ eval "$(printf '%s' "$input" | jq -r '
 ')"
 
 # Optional quota log. Set CLAUDE_STATUSLINE_QUOTA_LOG to a file path and one
-# tab-separated line (epoch, 5h %, 7d %, session id, dir, 7d reset epoch) is
+# tab-separated line (epoch, 5h %, 7d %, session id, dir, 7d reset epoch,
+# 5h reset epoch) is
 # appended each time either percentage moves. Sessions refresh independently,
 # so readings from two sessions can interleave a point apart; a reader should
 # take the highest value per reset window, not the difference between lines. On a subscription the quota is the real cost, so
@@ -30,7 +31,7 @@ eval "$(printf '%s' "$input" | jq -r '
 if [ -n "$CLAUDE_STATUSLINE_QUOTA_LOG" ] && [ -n "$SEVEN_D" ]; then
   last=$(tail -n 1 "$CLAUDE_STATUSLINE_QUOTA_LOG" 2>/dev/null | cut -f2,3)
   if [ "$last" != "${FIVE_H}	${SEVEN_D}" ]; then
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$FIVE_H" "$SEVEN_D" "$SESSION" "$DIR" "$SEVEN_RESET" \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$FIVE_H" "$SEVEN_D" "$SESSION" "$DIR" "$SEVEN_RESET" "$FIVE_RESET" \
       >> "$CLAUDE_STATUSLINE_QUOTA_LOG" 2>/dev/null
   fi
 fi
