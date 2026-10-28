@@ -20,14 +20,17 @@ eval "$(printf '%s' "$input" | jq -r '
        SESSION=\(.session_id // "")"
 ')"
 
-# Optional quota log. Set CLAUDE_STATUSLINE_QUOTA_LOG to a file path and one
-# tab-separated line (epoch, 5h %, 7d %, session id, dir, 7d reset epoch,
-# 5h reset epoch) is
-# appended each time either percentage moves. Sessions refresh independently,
-# so readings from two sessions can interleave a point apart; a reader should
-# take the highest value per reset window, not the difference between lines. On a subscription the quota is the real cost, so
-# this is what to measure a feature's price in. Several sessions can share the
-# file; comparing against the last line keeps unchanged readings out.
+# Optional quota log. Internal: written for the author's own cost
+# measurements and read by his private tooling; other users can ignore it,
+# since nothing happens unless CLAUDE_STATUSLINE_QUOTA_LOG is set.
+# Set it to a file path and one tab-separated line (epoch, 5h %, 7d %,
+# session id, dir, 7d reset epoch, 5h reset epoch) is appended each time
+# either percentage moves. Sessions refresh independently, so readings from
+# two sessions can interleave a point apart; a reader should take the highest
+# value per reset window, not the difference between lines. On a subscription
+# the quota is the real cost, so this is what to measure a feature's price
+# in. Several sessions can share the file; comparing against the last line
+# keeps unchanged readings out.
 if [ -n "$CLAUDE_STATUSLINE_QUOTA_LOG" ] && [ -n "$SEVEN_D" ]; then
   last=$(tail -n 1 "$CLAUDE_STATUSLINE_QUOTA_LOG" 2>/dev/null | cut -f2,3)
   if [ "$last" != "${FIVE_H}	${SEVEN_D}" ]; then
